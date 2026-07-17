@@ -58,10 +58,9 @@ export function PropertiesPanel() {
           screenshot to keep a record of your work.
         </p>
         <ul className="hint-list">
-          <li>Move mode — click and drag shapes; stretch with handles</li>
-          <li>Rotate mode — orbit the camera around your selection</li>
+          <li>Click and drag shapes to move; use handles to resize</li>
+          <li>Click and drag empty space to orbit the camera</li>
           <li>Shift+click to multi-select</li>
-          <li>Drag on empty space to box-select</li>
           <li>Ctrl+C / Ctrl+V to copy and paste shapes</li>
           <li>Hold Z while dragging to stack a shape on top of another</li>
         </ul>

@@ -32,6 +32,7 @@ interface SelectionHandlesProps {
 
 export function SelectionHandles({ square }: SelectionHandlesProps) {
   const theme = useSquareStore((s) => s.theme)
+  const setTransformMode = useSquareStore((s) => s.setTransformMode)
   const updateSquare = useSquareStore((s) => s.updateSquare)
   const setShapeDragging = useSquareStore((s) => s.setShapeDragging)
   const { camera, gl } = useThree()
@@ -52,6 +53,7 @@ export function SelectionHandles({ square }: SelectionHandlesProps) {
     sign: 1 | -1,
   ) => {
     event.stopPropagation()
+    setTransformMode('translate')
     setShapeDragging(true)
     dragRef.current = {
       axis,

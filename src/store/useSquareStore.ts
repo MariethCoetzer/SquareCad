@@ -114,7 +114,7 @@ export const useSquareStore = create<SquareStore>((set, get) => ({
   clipboard: null,
   theme: saved?.theme ?? 'light',
   gridEnabled: saved?.gridEnabled ?? true,
-  transformMode: saved?.transformMode ?? 'translate',
+  transformMode: 'rotate',
   orbitEnabled: true,
   shapeDragging: false,
   zKeyHeld: false,
@@ -125,6 +125,7 @@ export const useSquareStore = create<SquareStore>((set, get) => ({
       return {
         squares: [...state.squares, square],
         selectedIds: [square.id],
+        transformMode: 'translate',
       }
     }),
 
@@ -237,6 +238,5 @@ useSquareStore.subscribe((state) => {
     squares: state.squares,
     theme: state.theme,
     gridEnabled: state.gridEnabled,
-    transformMode: state.transformMode,
   })
 })

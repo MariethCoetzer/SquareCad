@@ -18,8 +18,6 @@
   --btn-bg-hover: #e8e8f0;
   --btn-active: #4a90d9;
   --btn-active-text: #ffffff;
-  --marquee-border: #4a90d9;
-  --marquee-fill: rgba(74, 144, 217, 0.12);
   --delete: #e74c3c;
   --delete-hover: #c0392b;
 }
@@ -36,8 +34,6 @@
   --btn-bg-hover: #363658;
   --btn-active: #5ba3eb;
   --btn-active-text: #ffffff;
-  --marquee-border: #5ba3eb;
-  --marquee-fill: rgba(91, 163, 235, 0.15);
   --delete: #e74c3c;
   --delete-hover: #ff6b5a;
 }
@@ -124,14 +120,6 @@ body,
   display: block;
   width: 100% !important;
   height: 100% !important;
-}
-
-.marquee-select {
-  position: absolute;
-  pointer-events: none;
-  border: 1px solid var(--marquee-border);
-  background: var(--marquee-fill);
-  z-index: 10;
 }
 
 .context-menu {

@@ -1,4 +1,4 @@
-import type { Square, Theme, TransformMode } from '../store/useSquareStore'
+import type { Square, Theme } from '../store/useSquareStore'
 
 const STORAGE_KEY = 'squarecad-session'
 
@@ -6,7 +6,6 @@ export interface PersistedSession {
   squares: Square[]
   theme: Theme
   gridEnabled: boolean
-  transformMode: TransformMode
 }
 
 function migrateSquare(raw: Record<string, unknown>): Square {
@@ -40,7 +39,6 @@ export function loadSession(): PersistedSession | null {
       squares: parsed.squares.map((sq) => migrateSquare(sq as Record<string, unknown>)),
       theme: parsed.theme === 'dark' ? 'dark' : 'light',
       gridEnabled: parsed.gridEnabled !== false,
-      transformMode: parsed.transformMode === 'rotate' ? 'rotate' : 'translate',
     }
   } catch {
     return null

@@ -1,8 +1,8 @@
-import { useState, useCallback, useRef } from 'react'
+import { useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Suspense } from 'react'
 import { SceneContent } from './SceneContent'
-import { MarqueeHandler, MarqueeOverlay, type MarqueeRect } from './MarqueeSelect'
+import { MarqueeHandler } from './MarqueeSelect'
 import { ContextMenu } from './ui/ContextMenu'
 
 interface ViewportProps {
@@ -10,11 +10,7 @@ interface ViewportProps {
 }
 
 export function Viewport({ onSceneReady }: ViewportProps) {
-  const [marqueeRect, setMarqueeRect] = useState<MarqueeRect | null>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
-  const handleRectChange = useCallback((rect: MarqueeRect | null) => {
-    setMarqueeRect(rect)
-  }, [])
 
   return (
     <div className="viewport" ref={viewportRef}>
@@ -27,10 +23,9 @@ export function Viewport({ onSceneReady }: ViewportProps) {
       >
         <Suspense fallback={null}>
           <SceneContent onReady={onSceneReady} />
-          <MarqueeHandler onRectChange={handleRectChange} />
+          <MarqueeHandler />
         </Suspense>
       </Canvas>
-      <MarqueeOverlay rect={marqueeRect} />
       <ContextMenu containerRef={viewportRef} />
     </div>
   )

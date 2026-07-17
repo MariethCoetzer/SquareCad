@@ -17,6 +17,7 @@ export function SquareMesh({ square }: SquareMeshProps) {
   const theme = useSquareStore((s) => s.theme)
   const transformMode = useSquareStore((s) => s.transformMode)
   const gridEnabled = useSquareStore((s) => s.gridEnabled)
+  const setTransformMode = useSquareStore((s) => s.setTransformMode)
   const selectSquare = useSquareStore((s) => s.selectSquare)
   const updateSquare = useSquareStore((s) => s.updateSquare)
   const setShapeDragging = useSquareStore((s) => s.setShapeDragging)
@@ -36,11 +37,7 @@ export function SquareMesh({ square }: SquareMeshProps) {
   const [w, h, d] = square.size
 
   const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
-    if (!isMoveMode) {
-      selectSquare(square.id, event.nativeEvent.shiftKey)
-      return
-    }
-
+    setTransformMode('translate')
     event.stopPropagation()
 
     const additive = event.nativeEvent.shiftKey
