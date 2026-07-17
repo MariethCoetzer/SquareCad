@@ -4,7 +4,7 @@
 
 ## Overview
 
-SquareCad is a browser-based 3D square editor that blends AutoCAD-style grid visuals with a Figma-like editing experience. Add 3D squares to a blank canvas, adjust their color, label, and size, then move and rotate them individually or as a group. Drag a selection box to multi-select squares, orbit the camera to view from any angle, and toggle a grid for snap-to-grid placement.
+SquareCad is a browser-based 3D square editor that blends AutoCAD-style grid visuals with a PowerPoint-like editing experience. Add 3D squares to a blank canvas, adjust their color, label, and size, then move and rotate them individually or as a group. Drag a selection box to multi-select squares, orbit the camera to view from any angle, and toggle a grid for snap-to-grid placement.
 
 ## Tech Stack
 
@@ -36,9 +36,8 @@ npm run preview
 
 1. Push this repository to GitHub.
 2. Import the repo in [Vercel](https://vercel.com).
-3. Set the **Root Directory** to `Coding`.
-4. Vercel auto-detects Vite — build command `npm run build`, output directory `dist`.
-5. Deploy.
+3. Vercel auto-detects Vite — build command `npm run build`, output directory `dist`.
+4. Deploy.
 
 ## Controls
 

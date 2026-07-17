@@ -5,7 +5,11 @@ import { useSquareStore } from '../store/useSquareStore'
 import { computeCentroid } from '../utils/selection'
 import { SquareMesh } from './SquareMesh'
 
-export function SceneContent() {
+interface SceneContentProps {
+  onReady?: () => void
+}
+
+export function SceneContent({ onReady }: SceneContentProps) {
   const squares = useSquareStore((s) => s.squares)
   const selectedIds = useSquareStore((s) => s.selectedIds)
   const theme = useSquareStore((s) => s.theme)
@@ -18,6 +22,10 @@ export function SceneContent() {
   const isRotateMode = transformMode === 'rotate'
 
   const selected = squares.filter((sq) => selectedIds.includes(sq.id))
+
+  useEffect(() => {
+    onReady?.()
+  }, [onReady])
 
   useEffect(() => {
     const controls = controlsRef.current

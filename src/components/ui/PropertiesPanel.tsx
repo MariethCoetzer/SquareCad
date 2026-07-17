@@ -1,7 +1,13 @@
-import { useSquareStore } from '../../store/useSquareStore'
+import { useState } from 'react'
+import { useSquareStore, PRESET_COLORS } from '../../store/useSquareStore'
 import { clampDimension } from '../../utils/gridSnap'
 
+function isPresetColor(color: string): boolean {
+  return PRESET_COLORS.some((preset) => preset.value.toLowerCase() === color.toLowerCase())
+}
+
 export function PropertiesPanel() {
+  const [collapsed, setCollapsed] = useState(false)
   const selectedIds = useSquareStore((s) => s.selectedIds)
   const squares = useSquareStore((s) => s.squares)
   const updateSelectedSquares = useSquareStore((s) => s.updateSelectedSquares)
@@ -11,16 +17,53 @@ export function PropertiesPanel() {
 
   const selected = squares.filter((sq) => selectedIds.includes(sq.id))
 
+  if (collapsed) {
+    return (
+      <button
+        type="button"
+        className="panel-toggle panel-toggle--collapsed"
+        onClick={() => setCollapsed(false)}
+        title="Show panel"
+        aria-label="Show panel"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="4" />
+          <polyline points="10,8 14,12 10,16" />
+        </svg>
+      </button>
+    )
+  }
+
   if (selected.length === 0) {
     return (
       <aside className="properties-panel properties-panel--empty">
-        <h2>SquareCad</h2>
+        <div className="properties-panel__header">
+          <h2>SquareCad</h2>
+          <button
+            type="button"
+            className="panel-collapse-btn"
+            onClick={() => setCollapsed(true)}
+            title="Collapse panel"
+            aria-label="Collapse panel"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="4" />
+              <polyline points="14,8 10,12 14,16" />
+            </svg>
+          </button>
+        </div>
         <p>Click a shape to select it, then drag to move or use the handles to resize.</p>
+        <p className="session-note">
+          Your session is saved in this browser. However, to be extra safe, take a
+          screenshot to keep a record of your work.
+        </p>
         <ul className="hint-list">
           <li>Move mode — click and drag shapes; stretch with handles</li>
           <li>Rotate mode — orbit the camera around your selection</li>
           <li>Shift+click to multi-select</li>
           <li>Drag on empty space to box-select</li>
+          <li>Ctrl+C / Ctrl+V to copy and paste shapes</li>
+          <li>Hold Z while dragging to stack a shape on top of another</li>
         </ul>
       </aside>
     )
@@ -28,7 +71,8 @@ export function PropertiesPanel() {
 
   const first = selected[0]
   const sharedColor = selected.every((sq) => sq.color === first.color) ? first.color : ''
-  const sharedLabel = selected.length === 1 ? first.label : ''
+  const sharedLabelTop = selected.length === 1 ? first.labelTop : ''
+  const sharedLabelSide = selected.length === 1 ? first.labelSide : ''
   const sharedWidth =
     selected.length === 1 ? first.size[0] : selected.every((sq) => sq.size[0] === first.size[0]) ? first.size[0] : 1
   const sharedHeight =
@@ -50,42 +94,97 @@ export function PropertiesPanel() {
     }
   }
 
+  const activeColor = sharedColor || '#3498db'
+  const customColorActive = sharedColor !== '' && !isPresetColor(sharedColor)
+
   return (
     <aside className="properties-panel">
       <div className="properties-panel__header">
         <h2>
           {selected.length === 1 ? 'Shape Properties' : `${selected.length} Shapes Selected`}
         </h2>
-        <button
-          type="button"
-          className="panel-close-btn"
-          onClick={clearSelection}
-          title="Close"
-          aria-label="Close properties"
-        >
-          ×
-        </button>
+        <div className="properties-panel__header-actions">
+          <button
+            type="button"
+            className="panel-collapse-btn"
+            onClick={() => setCollapsed(true)}
+            title="Collapse panel"
+            aria-label="Collapse panel"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="4" />
+              <polyline points="14,8 10,12 14,16" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="panel-close-btn"
+            onClick={clearSelection}
+            title="Close"
+            aria-label="Close properties"
+          >
+            ×
+          </button>
+        </div>
       </div>
 
-      <label className="field">
+      <div className="field">
         <span>Color</span>
-        <input
-          type="color"
-          value={sharedColor || '#4a90d9'}
-          onChange={(e) => updateSelectedSquares({ color: e.target.value })}
-        />
-      </label>
+        <div className="color-swatches">
+          {PRESET_COLORS.map((preset) => (
+            <button
+              key={preset.value}
+              type="button"
+              className={`color-swatch ${sharedColor === preset.value ? 'active' : ''}`}
+              style={{ backgroundColor: preset.value }}
+              title={preset.name}
+              aria-label={preset.name}
+              onClick={() => updateSelectedSquares({ color: preset.value })}
+            />
+          ))}
+          <label
+            className={`color-swatch color-swatch--picker ${customColorActive ? 'active' : ''}`}
+            title="Custom color"
+          >
+            <input
+              type="color"
+              value={activeColor}
+              onChange={(e) => updateSelectedSquares({ color: e.target.value })}
+              aria-label="Custom color"
+            />
+            <span className="color-swatch-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 20h16" />
+                <path d="M6 16l6-12 6 12" />
+                <path d="M8 12h8" />
+              </svg>
+            </span>
+          </label>
+        </div>
+      </div>
 
       {selected.length === 1 && (
-        <label className="field">
-          <span>Label</span>
-          <input
-            type="text"
-            value={sharedLabel}
-            onChange={(e) => updateSelectedSquares({ label: e.target.value })}
-            placeholder="Shape label"
-          />
-        </label>
+        <>
+          <label className="field">
+            <span>Label (Top)</span>
+            <input
+              type="text"
+              value={sharedLabelTop}
+              onChange={(e) => updateSelectedSquares({ labelTop: e.target.value })}
+              placeholder="Top label"
+            />
+          </label>
+
+          <label className="field">
+            <span>Label (Side)</span>
+            <input
+              type="text"
+              value={sharedLabelSide}
+              onChange={(e) => updateSelectedSquares({ labelSide: e.target.value })}
+              placeholder="Side label"
+            />
+          </label>
+        </>
       )}
 
       <label className="field">

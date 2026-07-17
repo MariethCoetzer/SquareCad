@@ -6,6 +6,7 @@ import * as THREE from 'three'
 import { useSquareStore, type Square } from '../store/useSquareStore'
 import { SelectionHandles } from './SelectionHandles'
 import { snapPosition } from '../utils/gridSnap'
+import { resolveDragY } from '../utils/stacking'
 
 interface SquareMeshProps {
   square: Square
@@ -103,12 +104,33 @@ export function SquareMesh({ square }: SquareMeshProps) {
         if (!start) return
         const sq = useSquareStore.getState().squares.find((s) => s.id === id)
         if (!sq) return
+
+        const zKeyHeld = useSquareStore.getState().zKeyHeld
+        const allSquares = useSquareStore.getState().squares
+        const excludeIds = new Set(dragRef.current!.ids)
+
+        const candidateAtXZ: Square = {
+          ...sq,
+          position: [start[0] + delta[0], start[1], start[2] + delta[2]],
+        }
+
+        const others = allSquares.filter((s) => !excludeIds.has(s.id))
+        const { y, stacked } = resolveDragY(
+          candidateAtXZ,
+          others,
+          start[1],
+          zKeyHeld,
+        )
+
         const raw: [number, number, number] = [
           start[0] + delta[0],
-          sq.size[1] / 2,
+          y,
           start[2] + delta[2],
         ]
-        const snapped = snapPosition(raw, gridEnabled, sq.size[1])
+        const snapped = snapPosition(raw, gridEnabled, {
+          height: sq.size[1],
+          preserveY: stacked,
+        })
         updateSquare(id, { position: snapped })
       })
     }
@@ -168,7 +190,7 @@ export function SquareMesh({ square }: SquareMeshProps) {
         </>
       )}
 
-      {square.label && (
+      {square.labelTop && (
         <Text
           position={[0, h / 2 + 0.02, 0]}
           rotation={[-Math.PI / 2, 0, 0]}
@@ -178,7 +200,20 @@ export function SquareMesh({ square }: SquareMeshProps) {
           anchorY="middle"
           maxWidth={w * 0.85}
         >
-          {square.label}
+          {square.labelTop}
+        </Text>
+      )}
+
+      {square.labelSide && (
+        <Text
+          position={[0, 0, d / 2 + 0.02]}
+          fontSize={Math.min(0.22, w * 0.35)}
+          color={theme === 'dark' ? '#ffffff' : '#111111'}
+          anchorX="center"
+          anchorY="middle"
+          maxWidth={w * 0.85}
+        >
+          {square.labelSide}
         </Text>
       )}
     </group>

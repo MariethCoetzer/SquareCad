@@ -4,6 +4,7 @@ import type { ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useSquareStore, type Size3, type Square } from '../store/useSquareStore'
 import { clampDimension } from '../utils/gridSnap'
+import { groundY } from '../utils/stacking'
 
 type Axis = 'x' | 'y' | 'z'
 
@@ -95,7 +96,8 @@ export function SelectionHandles({ square }: SelectionHandlesProps) {
       const sizeDelta = newSize[axisIndex] - startSize[axisIndex]
       const newPos: [number, number, number] = [...startPos]
       newPos[axisIndex] = startPos[axisIndex] + (sizeDelta / 2) * sg
-      if (ax === 'y') {
+      const wasElevated = startPos[1] > groundY(startSize) + 0.01
+      if (ax === 'y' && !wasElevated) {
         newPos[1] = newSize[1] / 2
       }
 
