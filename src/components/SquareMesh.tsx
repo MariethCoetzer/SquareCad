@@ -6,6 +6,7 @@ import * as THREE from 'three'
 import { useSquareStore, type Square } from '../store/useSquareStore'
 import { SelectionHandles } from './SelectionHandles'
 import { snapPosition } from '../utils/gridSnap'
+import { applyFaceSnap } from '../utils/faceSnap'
 import { resolveDragY } from '../utils/stacking'
 
 interface SquareMeshProps {
@@ -103,32 +104,36 @@ export function SquareMesh({ square }: SquareMeshProps) {
         if (!sq) return
 
         const zKeyHeld = useSquareStore.getState().zKeyHeld
+        const xKeyHeld = useSquareStore.getState().xKeyHeld
         const allSquares = useSquareStore.getState().squares
         const excludeIds = new Set(dragRef.current!.ids)
 
-        const candidateAtXZ: Square = {
-          ...sq,
-          position: [start[0] + delta[0], start[1], start[2] + delta[2]],
+        const others = allSquares.filter((s) => !excludeIds.has(s.id))
+
+        const candidateXZ: [number, number, number] = [
+          start[0] + delta[0],
+          start[1],
+          start[2] + delta[2],
+        ]
+        let snappedXZ = gridEnabled
+          ? snapPosition(candidateXZ, true, {
+              preserveY: true,
+              size: sq.size,
+            })
+          : candidateXZ
+        if (gridEnabled) {
+          snappedXZ = applyFaceSnap({ ...sq, position: snappedXZ }, others)
         }
 
-        const others = allSquares.filter((s) => !excludeIds.has(s.id))
-        const { y, stacked } = resolveDragY(
-          candidateAtXZ,
+        const { y } = resolveDragY(
+          { ...sq, position: snappedXZ },
           others,
           start[1],
           zKeyHeld,
+          xKeyHeld,
         )
 
-        const raw: [number, number, number] = [
-          start[0] + delta[0],
-          y,
-          start[2] + delta[2],
-        ]
-        const snapped = snapPosition(raw, gridEnabled, {
-          height: sq.size[1],
-          preserveY: stacked,
-        })
-        updateSquare(id, { position: snapped })
+        updateSquare(id, { position: [snappedXZ[0], y, snappedXZ[2]] })
       })
     }
 
@@ -191,7 +196,7 @@ export function SquareMesh({ square }: SquareMeshProps) {
         <Text
           position={[0, h / 2 + 0.02, 0]}
           rotation={[-Math.PI / 2, 0, 0]}
-          fontSize={Math.min(0.22, w * 0.35)}
+          fontSize={square.labelFontSize}
           color={theme === 'dark' ? '#ffffff' : '#111111'}
           anchorX="center"
           anchorY="middle"
@@ -204,7 +209,7 @@ export function SquareMesh({ square }: SquareMeshProps) {
       {square.labelSide && (
         <Text
           position={[0, 0, d / 2 + 0.02]}
-          fontSize={Math.min(0.22, w * 0.35)}
+          fontSize={square.labelFontSize}
           color={theme === 'dark' ? '#ffffff' : '#111111'}
           anchorX="center"
           anchorY="middle"

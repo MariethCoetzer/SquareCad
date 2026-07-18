@@ -3,8 +3,11 @@ import {
   deriveNextId,
   loadSession,
   saveSession,
+  downloadSessionFile,
+  type PersistedSession,
 } from '../utils/sessionPersistence'
 import { computeStackY, groundY } from '../utils/stacking'
+import { DEFAULT_LABEL_FONT_SIZE } from '../utils/labelFont'
 
 export type Size3 = [number, number, number]
 
@@ -15,6 +18,7 @@ export interface Square {
   color: string
   labelTop: string
   labelSide: string
+  labelFontSize: number
 }
 
 export type SquareData = Omit<Square, 'id'>
@@ -41,6 +45,8 @@ interface SquareStore {
   orbitEnabled: boolean
   shapeDragging: boolean
   zKeyHeld: boolean
+  xKeyHeld: boolean
+  orbitEngaged: boolean
   addSquare: () => void
   updateSquare: (id: string, patch: Partial<Omit<Square, 'id'>>) => void
   updateSelectedSquares: (patch: Partial<Omit<Square, 'id'>>) => void
@@ -58,6 +64,10 @@ interface SquareStore {
   setOrbitEnabled: (enabled: boolean) => void
   setShapeDragging: (dragging: boolean) => void
   setZKeyHeld: (held: boolean) => void
+  setXKeyHeld: (held: boolean) => void
+  setOrbitEngaged: (engaged: boolean) => void
+  exportSession: () => void
+  importSession: (session: PersistedSession) => void
 }
 
 const saved = loadSession()
@@ -79,6 +89,7 @@ function createSquare(index: number): Square {
     color: DEFAULT_COLORS[index % DEFAULT_COLORS.length],
     labelTop: `Square ${index + 1}`,
     labelSide: '',
+    labelFontSize: DEFAULT_LABEL_FONT_SIZE,
   }
 }
 
@@ -90,6 +101,7 @@ function cloneSquareData(data: SquareData): Square {
     color: data.color,
     labelTop: data.labelTop,
     labelSide: data.labelSide,
+    labelFontSize: data.labelFontSize,
   }
 }
 
@@ -118,6 +130,8 @@ export const useSquareStore = create<SquareStore>((set, get) => ({
   orbitEnabled: true,
   shapeDragging: false,
   zKeyHeld: false,
+  xKeyHeld: false,
+  orbitEngaged: false,
 
   addSquare: () =>
     set((state) => {
@@ -171,6 +185,7 @@ export const useSquareStore = create<SquareStore>((set, get) => ({
         color: data.color,
         labelTop: data.labelTop,
         labelSide: data.labelSide,
+        labelFontSize: data.labelFontSize,
       }))
 
     set({ clipboard: copied })
@@ -231,6 +246,30 @@ export const useSquareStore = create<SquareStore>((set, get) => ({
   setShapeDragging: (dragging) => set({ shapeDragging: dragging }),
 
   setZKeyHeld: (held) => set({ zKeyHeld: held }),
+
+  setXKeyHeld: (held) => set({ xKeyHeld: held }),
+
+  setOrbitEngaged: (engaged) => set({ orbitEngaged: engaged }),
+
+  exportSession: () => {
+    const state = get()
+    downloadSessionFile({
+      squares: state.squares,
+      theme: state.theme,
+      gridEnabled: state.gridEnabled,
+    })
+  },
+
+  importSession: (session: PersistedSession) => {
+    nextId = deriveNextId(session.squares)
+    set({
+      squares: session.squares,
+      theme: session.theme,
+      gridEnabled: session.gridEnabled,
+      selectedIds: [],
+    })
+    saveSession(session)
+  },
 }))
 
 useSquareStore.subscribe((state) => {

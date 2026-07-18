@@ -34,10 +34,8 @@ export function SceneContent({ onReady }: SceneContentProps) {
     if (isRotateMode && selected.length > 0) {
       const [x, y, z] = computeCentroid(selected)
       controls.target.set(x, y, z)
-    } else if (selected.length === 0) {
-      controls.target.set(0, 0, 0)
+      controls.update()
     }
-    controls.update()
   }, [isRotateMode, selectedIds, squares, selected.length])
 
   const cellColor = theme === 'dark' ? '#2a2a3a' : '#d0d0d0'
@@ -72,13 +70,12 @@ export function SceneContent({ onReady }: SceneContentProps) {
         ref={controlsRef}
         makeDefault
         enabled={orbitEnabled && !shapeDragging}
-        enableRotate={isRotateMode}
-        enablePan={isRotateMode}
+        enableRotate={false}
+        enablePan={false}
         enableZoom
-        enableDamping
-        dampingFactor={0.08}
+        enableDamping={false}
         minDistance={3}
-        maxDistance={50}
+        maxDistance={100}
       />
     </>
   )

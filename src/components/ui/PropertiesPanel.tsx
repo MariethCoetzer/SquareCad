@@ -1,9 +1,134 @@
-import { useState } from 'react'
+import { useEffect, useState, type KeyboardEvent } from 'react'
 import { useSquareStore, PRESET_COLORS } from '../../store/useSquareStore'
-import { clampDimension } from '../../utils/gridSnap'
+import { clampDimension, MAX_DIMENSION, MIN_DIMENSION } from '../../utils/gridSnap'
+import {
+  clampLabelFontSize,
+  DEFAULT_LABEL_FONT_SIZE,
+  LABEL_FONT_SIZE_STEP,
+} from '../../utils/labelFont'
 
 function isPresetColor(color: string): boolean {
   return PRESET_COLORS.some((preset) => preset.value.toLowerCase() === color.toLowerCase())
+}
+
+const SIZE_STEP = 1
+
+function filterNumericInput(raw: string): string {
+  let seenDot = false
+  let result = ''
+  for (const ch of raw) {
+    if (ch >= '0' && ch <= '9') {
+      result += ch
+    } else if (ch === '.' && !seenDot) {
+      seenDot = true
+      result += ch
+    }
+  }
+  return result
+}
+
+interface SizeStepperProps {
+  label: string
+  value: number
+  onChange: (value: number) => void
+}
+
+function SizeStepper({ label, value, onChange }: SizeStepperProps) {
+  const [draft, setDraft] = useState(String(value))
+
+  useEffect(() => {
+    setDraft(String(value))
+  }, [value])
+
+  const commitDraft = () => {
+    const parsed = parseFloat(draft)
+    if (Number.isFinite(parsed)) {
+      onChange(parsed)
+    } else {
+      setDraft(String(value))
+    }
+  }
+
+  const stepBy = (delta: number) => {
+    onChange(clampDimension(value + delta))
+  }
+
+  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      commitDraft()
+      event.currentTarget.blur()
+    }
+  }
+
+  return (
+    <div className="field">
+      <span>{label}</span>
+      <div className="size-stepper">
+        <button
+          type="button"
+          className="size-stepper-btn"
+          onClick={() => stepBy(-SIZE_STEP)}
+          aria-label={`Decrease ${label.toLowerCase()}`}
+        >
+          −
+        </button>
+        <input
+          type="text"
+          inputMode="decimal"
+          className="size-stepper-input"
+          value={draft}
+          onChange={(e) => setDraft(filterNumericInput(e.target.value))}
+          onBlur={commitDraft}
+          onKeyDown={onKeyDown}
+          aria-label={label}
+        />
+        <button
+          type="button"
+          className="size-stepper-btn"
+          onClick={() => stepBy(SIZE_STEP)}
+          aria-label={`Increase ${label.toLowerCase()}`}
+        >
+          +
+        </button>
+      </div>
+    </div>
+  )
+}
+
+interface FontSizeStepperProps {
+  value: number
+  onChange: (value: number) => void
+}
+
+function FontSizeStepper({ value, onChange }: FontSizeStepperProps) {
+  const stepBy = (delta: number) => {
+    onChange(clampLabelFontSize(value + delta))
+  }
+
+  return (
+    <div className="field">
+      <span>Font Size</span>
+      <div className="size-stepper">
+        <button
+          type="button"
+          className="size-stepper-btn"
+          onClick={() => stepBy(-LABEL_FONT_SIZE_STEP)}
+          aria-label="Decrease font size"
+        >
+          −
+        </button>
+        <span className="size-stepper-value">{value.toFixed(2)}</span>
+        <button
+          type="button"
+          className="size-stepper-btn"
+          onClick={() => stepBy(LABEL_FONT_SIZE_STEP)}
+          aria-label="Increase font size"
+        >
+          +
+        </button>
+      </div>
+    </div>
+  )
 }
 
 export function PropertiesPanel() {
@@ -54,15 +179,17 @@ export function PropertiesPanel() {
         </div>
         <p>Click a shape to select it, then drag to move or use the handles to resize.</p>
         <p className="session-note">
-          Your session is saved in this browser. However, to be extra safe, take a
-          screenshot to keep a record of your work.
+          Your session is saved in this browser. Use Export in the top-right to download
+          your layout, or Import to restore it later.
         </p>
         <ul className="hint-list">
           <li>Click and drag shapes to move; use handles to resize</li>
           <li>Click and drag empty space to orbit the camera</li>
           <li>Shift+click to multi-select</li>
           <li>Ctrl+C / Ctrl+V to copy and paste shapes</li>
+          <li>Export / Import (top-right) to save or load a layout file</li>
           <li>Hold Z while dragging to stack a shape on top of another</li>
+          <li>Hold X while dragging to lower a shape by one layer</li>
         </ul>
       </aside>
     )
@@ -152,10 +279,9 @@ export function PropertiesPanel() {
               aria-label="Custom color"
             />
             <span className="color-swatch-icon" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M4 20h16" />
-                <path d="M6 16l6-12 6 12" />
-                <path d="M8 12h8" />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m14.622 17.897-10.68-2.913" />
+                <path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a2 2 0 0 0-.854 1.659l.39 2.443a.5.5 0 0 1-.622.622l-2.443-.39a2 2 0 0 0-1.659.854z" />
               </svg>
             </span>
           </label>
@@ -183,47 +309,20 @@ export function PropertiesPanel() {
               placeholder="Side label"
             />
           </label>
+
+          <FontSizeStepper
+            value={first.labelFontSize ?? DEFAULT_LABEL_FONT_SIZE}
+            onChange={(labelFontSize) => updateSelectedSquares({ labelFontSize })}
+          />
         </>
       )}
 
-      <label className="field">
-        <span>Width</span>
-        <input
-          type="range"
-          min={0.25}
-          max={6}
-          step={0.25}
-          value={sharedWidth}
-          onChange={(e) => setSize(0, parseFloat(e.target.value))}
-        />
-        <span className="field-value">{sharedWidth.toFixed(2)}</span>
-      </label>
-
-      <label className="field">
-        <span>Height</span>
-        <input
-          type="range"
-          min={0.25}
-          max={6}
-          step={0.25}
-          value={sharedHeight}
-          onChange={(e) => setSize(1, parseFloat(e.target.value))}
-        />
-        <span className="field-value">{sharedHeight.toFixed(2)}</span>
-      </label>
-
-      <label className="field">
-        <span>Depth</span>
-        <input
-          type="range"
-          min={0.25}
-          max={6}
-          step={0.25}
-          value={sharedDepth}
-          onChange={(e) => setSize(2, parseFloat(e.target.value))}
-        />
-        <span className="field-value">{sharedDepth.toFixed(2)}</span>
-      </label>
+      <SizeStepper label="Width" value={sharedWidth} onChange={(v) => setSize(0, v)} />
+      <SizeStepper label="Depth" value={sharedDepth} onChange={(v) => setSize(2, v)} />
+      <SizeStepper label="Height" value={sharedHeight} onChange={(v) => setSize(1, v)} />
+      <p className="size-hint">
+        Type a size ({MIN_DIMENSION}–{MAX_DIMENSION}) or use +/− to change by {SIZE_STEP}.
+      </p>
 
       <button type="button" className="delete-btn" onClick={deleteSelected}>
         Delete Selected
